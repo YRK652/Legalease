@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LegalEase - AI Legal Assistant</title>
+  <style>
+    body { font-family: "Poppins", sans-serif; background:#f7fdf8; display:flex; justify-content:center; align-items:center; height:100vh; margin:0; }
+    .app { width:95%; max-width:500px; background:#fff; border-radius:20px; box-shadow:0 4px 20px rgba(0,128,0,0.1); display:flex; flex-direction:column; height:90vh; overflow:hidden; }
+    header { background:#d8f3dc; padding:15px; text-align:center; border-bottom:2px solid #95d5b2; }
+    header h1{margin:0;color:#2d6a4f;} header p{margin:5px 0 0;color:#40916c;font-size:0.9rem;}
+    .chat-box{flex:1;overflow-y:auto;padding:15px;display:flex;flex-direction:column;}
+    .message{padding:10px 14px;border-radius:12px;margin:8px 0;max-width:80%;line-height:1.4;word-wrap:break-word;}
+    .user{align-self:flex-end;background:#b7e4c7;color:#1b4332;}
+    .bot{align-self:flex-start;background:#f1fdf2;border:1px solid #b7e4c7;color:#081c15;}
+    .input-area{display:flex;padding:10px;background:#d8f3dc;border-top:2px solid #95d5b2;}
+    #user-input{flex:1;padding:10px;border:none;border-radius:12px;outline:none;}
+    #send-btn{background:#52b788;border:none;color:white;padding:10px 18px;border-radius:12px;margin-left:8px;cursor:pointer;transition:0.2s;}
+    #send-btn:hover{background:#40916c;}
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <h1>⚖️ LegalEase</h1>
+      <p>Your AI Legal Assistant</p>
+    </header>
+    <div id="chat-box" class="chat-box"></div>
+    <div class="input-area">
+      <input type="text" id="user-input" placeholder="Type your message..." />
+      <button id="send-btn">Send</button>
+    </div>
+  </div>
+
+  <script>
+    const chatBox = document.getElementById("chat-box");
+    const userInput = document.getElementById("user-input");
+    const sendBtn = document.getElementById("send-btn");
+
+    function addMessage(text, sender) {
+      const msg = document.createElement("div");
+      msg.classList.add("message", sender);
+      msg.innerText = text;
+      chatBox.appendChild(msg);
+      chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
+    async function sendMessage() {
+      const message = userInput.value.trim();
+      if(!message) return;
+      addMessage(message,"user");
+      userInput.value="";
+
+      try {
+        const res = await fetch("http://localhost:3000/chat",{
+          method:"POST",
+          headers:{"Content-Type":"application/json"},
+          body:JSON.stringify({ message })
+        });
+
+        const data = await res.json();
+        if(res.ok){
+          addMessage(`🤖 (${data.emotion}) ${data.reply}`,"bot");
+        }else{
+          addMessage(`⚠️ ${data.error}`,"bot");
+        }
+      } catch(err){
+        addMessage("⚠️ Unable to connect to server.","bot");
+      }
+    }
+
+    sendBtn.addEventListener("click", sendMessage);
+    userInput.addEventListener("keypress", e => { if(e.key==="Enter") sendMessage(); });
+
+    // Initial greeting
+    addMessage("👋 Hi! I’m LegalEase. Describe your problem and I’ll guide you legally.","bot");
+  </script>
+</body>
+</html>
